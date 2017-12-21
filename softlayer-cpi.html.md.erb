@@ -6,17 +6,25 @@ This topic describes cloud properties for different resources created by the Sof
 
 ## <a id='azs'></a> AZs
 
+Schema for `cloud_properties` section:
+
+* **datacenter** [String, required]: Name of the datacenter. Example: `lon02`.
+
 Example:
 
 ```yaml
 azs:
 - name: z1
   cloud_properties:
-    Datacenter: { Name: lon02 }
+    datacenter: lon02
 ```
 
 ---
 ## <a id='networks'></a> Networks
+
+Schema for `cloud_properties` section used by dynamic network or manual network subnet:
+
+* **vlan_ids** (Array&lt;String&gt;, required)- A list of the [SoftLayer Network Vlan](https://sldn.softlayer.com/reference/datatypes/SoftLayer_Network_Vlan) id that the CPI will use when creating the instance (at lest set one private network). Example: `cf`.
 
 Example of dynamic network (both public and private networks are available):
 
@@ -28,12 +36,7 @@ networks:
   - az: z1
     dns: [10.1.2.3, 10.0.80.11, 10.0.80.12]
     cloud_properties:
-      PrimaryNetworkComponent:
-         NetworkVlan:
-            Id: 524956
-      PrimaryBackendNetworkComponent:
-         NetworkVlan:
-            Id: 524954
+      vlan_ids: [524956, 524954]
 ```
 
 Example of dynamic network (only private network is available):
@@ -46,10 +49,7 @@ networks:
   - az: z1
     dns: [10.1.2.3, 10.0.80.11, 10.0.80.12]
     cloud_properties:
-      PrivateNetworkOnlyFlag: true
-      PrimaryBackendNetworkComponent:
-         NetworkVlan:
-             Id: 524954
+      vlan_ids: [524954]
 ```
 
 Example of manual network:
@@ -72,60 +72,62 @@ networks:
     - 10.112.166.131
     static:
     - 10.112.166.132 - 10.112.166.162
+    cloud_properties:
+      vlan_ids: [524954]    
 ```
 
 Currently SoftLayer CPI does not support vip network.
 
 ---
-## <a id='resource-pools'></a> Resource Pools / VM Types
+## <a id='vm-types'></a> VM Types
 
 Schema for `cloud_properties` section:
 
-* **Domain** [String, required]: Name of the domain. Example: `softlayer.com`.
-* **VmNamePrefix** [String, required]: Prefix of the vm name. Example: `bosh-softlayer`. Please note that, for bosh director, this property is the full hostname, and for other VMs in deployments, a timestamp will be appended to the property value to make the hostname.
-* **EphemeralDiskSize** [Integer, required]: Ephemeral disk size in gigabyte. Example: `100`.
-* **StartCpus** [Integer, required]: Number of CPUs. Example: `4`.
-* **MaxMemory** [Integer, required]: Memory in megabytes. Example: `8192`.
-* **Datacenter** :
-    * **Name** [String, required]: Name of the datacenter. Example: `lon02`.
-* **HourlyBillingFlag** [Boolean, optional]: If the vm is hourly billing. Default is `false`. 
+* **hostname_prefix** [String, required]: The hostname of the [SoftLayer Virtual Guest](https://sldn.softlayer.com/reference/datatypes/SoftLayer_Virtual_Guest) the CPI will use when creating the instance. Please note that, for bosh director, this property is the full hostname, and for other instances in deployments, a timestamp will be appended to the property value to make the hostname. Example: `bosh-softlayer`.
+* **domain** [String, required]: The domain name of the [SoftLayer Virtual Guest](https://sldn.softlayer.com/reference/datatypes/SoftLayer_Virtual_Guest) the CPI will use when creating the instance. Example: `softlayer.com`.
+* **cpu** [Integer, required]: Number of CPUs ([SoftLayer Virtual Guest](https://sldn.softlayer.com/reference/datatypes/SoftLayer_Virtual_Guest)) the CPI will use when creating the instance. Example: `4`.
+* **memory** [Integer, required]: Memory(in Mb) ([SoftLayer Virtual Guest](https://sldn.softlayer.com/reference/datatypes/SoftLayer_Virtual_Guest)) the CPI will use when creating the instance. Example: `8192`.
+* **max_network_speed** [Integer, optional]: Max speed of networkComponents SoftLayer Virtual Guest](https://sldn.softlayer.com/reference/datatypes/SoftLayer_Virtual_Guest) the CPI will use when creating the instance. Default is `1000`. 
+* **ephemeral_disk_size** [Integer, optional]: Ephemeral disk size(in Gb) the CPI will use when creating the instance. Example: `100`.
+* **hourly_billing_flag** [Boolean, optional]: If the instance is hourly billing. Default is `false`. 
+* **local_disk_flag** [Boolean, optional]: If the instance has at least one disk which is local to the host it runs on. Default is `false`. 
+* **dedicated_account_host_only_flag** [Boolean, optional]: If the instance is to run on hosts that only have guests from the same account. Default is `false`. 
+* **deployed_by_boshcli** [Boolean, optional]: If the instance is deployed by bosh-cli. Default is `false`. 
 
 Example:
 
 ```yaml
-resource_pools:
+vm_types:
 - name: vms
   network: default
   stemcell:
     url: light-bosh-stemcell-3169-softlayer-esxi-ubuntu-trusty-go_agent
   cloud_properties:
-    Domain: softlayer.com
-    VmNamePrefix: bosh-softlayer
-    EphemeralDiskSize: 100
-    StartCpus: 4
-    MaxMemory: 8192
-    Datacenter:
-       Name: lon02
-    HourlyBillingFlag: true
+    hostname_prefix: bosh-softlayer
+    domain: softlayer.com
+    cpu: 4
+    memory: 8192
+    ephemeral_disk_size: 100
+    hourly_billing_flag: true
 ```
 
 ---
-## <a id='disk-pools'></a> Disk Pools / Disk Types
+## <a id='disk-types'></a> Disk Types
 
 Schema for `cloud_properties` section:
 
-* **Iops** [Integer, optional]: input/output operations per second (IOPS) value. Example: `1000`. If it's not set, a medium IOPS value of the specified disk size will be chosen.
-* **UseHourlyPricing** [Boolean, optional]: If the disk is hourly pricing. Default is `false`.
+* **iops** [Integer, optional]: Input/output operations per second (IOPS) value. Example: `1000`. If it's not set, a medium IOPS value of the specified disk size will be chosen.
+* **snapshot_space** [Boolean, optional]: The size of snapshot space of the disk. Example: `20`.
 
 Example of 100GB disk:
 
 ```yaml
-disk_pools:
+disk_types:
 - name: disks
   disk_size: 100_000
   cloud_properties:
-    Iops: 1000
-    UseHourlyPricing: true
+    iops: 1000
+    snapshot_space: 20
 ```
 
 ---
@@ -135,25 +137,25 @@ disk_pools:
 azs:
 - name: z1
   cloud_properties:
-    Datacenter: { Name: lon02  }
+    datacenter: lon02
 
 vm_types:
 - name: compilation
-  cloud_properties:
-    Bosh_ip: 10.1.2.3
-    StartCpus:  4
-    MaxMemory:  8192
-    EphemeralDiskSize: 100
-    HourlyBillingFlag: true
-    VmNamePrefix: sl-compilation-worker-
+  cloud_properties:    
+    hostname_prefix: bosh-compilation
+    domain: softlayer.com
+    cpu: 4
+    memory: 8192
+    ephemeral_disk_size: 100
+    hourly_billing_flag: true
 - name: sl-server
   cloud_properties:
-    Bosh_ip: 10.1.2.3
-    StartCpus:  4
-    MaxMemory:  8192
+    hostname_prefix: bosh-server
+    domain: softlayer.com
+    cpu: 8
+    memory: 8192
     EphemeralDiskSize: 100
-    HourlyBillingFlag: true
-    VmNamePrefix: sl-
+    hourly_billing_flag: true
 
 disk_types:
 - name: default
@@ -168,12 +170,7 @@ networks:
   - az: z1
   - dns: [10.1.2.3, 10.0.80.11, 10.0.80.12]
   cloud_properties:
-    PrimaryNetworkComponent:
-       NetworkVlan:
-          Id: 524956
-    PrimaryBackendNetworkComponent:
-       NetworkVlan:
-          Id: 524954
+    vlan_ids: [524956, 524954]
 
 compilation:
   workers: 5
@@ -182,8 +179,6 @@ compilation:
   vm_type: compilation
   network: default
 ```
-
-The ``Bosh_ip`` property specified under ``cloud_properties`` is used for Softlayer CPI to differentiate the director and common vms. The one with cloud_property ``Bosh_ip`` is a common vm. The one without ``Bosh_ip`` is the director.
 
 Please notice that when the VM hostname length is exactly 64, the deployment is failing due to ssh problem. This is Softlayer’s limitation which can’t be fixed in a short term. We have a work around in the CPI that when the hostname with 64 characters is identified, a padding "-1" is appended to make it longer than 64.
 

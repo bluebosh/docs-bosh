@@ -52,21 +52,20 @@ VLANs provide the ability to partition devices and subnets on the network. To or
     $ git clone https://github.com/cloudfoundry/bosh-deployment
 
     # Fill below variables (replace example values) and deploy the Director
-    $ sudo bosh create-env bosh-deployment/bosh.yml \
-        --state=state.json \
-        --vars-store=creds.yml \
+    $ bosh interpolate bosh-deployment/bosh.yml \
         -o bosh-deployment/softlayer/cpi.yml \
-        -v director_name=bosh-1 \
-        -v internal_cidr=10.0.0.0/24 \
-        -v internal_gw=10.0.0.1 \
         -v internal_ip=10.0.0.6 \
-        -v sl_datacenter= \
-        -v sl_vm_domain= \
-        -v sl_vm_name_prefix= \
-        -v sl_vlan_public= \
-        -v sl_vlan_private= \
-        -v sl_username= \
-        -v sl_api_key=
+        -v dns_recursor_ip=8.8.8.8 \
+        -v director_name=bats-director \
+        -v sl_director_fqn=<sl_hostname_prefix>.<sl_domain> \
+        --vars-file <( ~/Downloads/softlayer_credentials.json ) \
+        --vars-store director-creds.yml \
+        > director.yml
+
+    $ sudo bosh create-env \
+        --state director-state.json \
+        --vars-store director-creds.yml \
+        director.yml
     </pre>
 
     <p class="note">Note: The reason why need to run `bosh create-env` command with sudo is that it needs to update `/etc/hosts` file which needs suffient permission.</p>
@@ -75,11 +74,11 @@ VLANs provide the ability to partition devices and subnets on the network. To or
 
     <pre class="terminal">
     # Configure local alias
-    $ bosh alias-env bosh-1 -e 10.0.0.6 --ca-cert <(bosh int ./creds.yml --path /director_ssl/ca)
+    $ bosh alias-env bosh-1 -e 10.0.0.6 --ca-cert <(bosh int ./director-creds.yml --path /default_ca/ca)
 
     # Log in to the Director
     $ export BOSH_CLIENT=admin
-    $ export BOSH_CLIENT_SECRET=`bosh int ./creds.yml --path /admin_password`
+    $ export BOSH_CLIENT_SECRET=`bosh int ./director-creds.yml --path /admin_password`
 
     # Query the Director for more info
     $ bosh -e bosh-1 env
